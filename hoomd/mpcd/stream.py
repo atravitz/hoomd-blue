@@ -13,13 +13,15 @@ scheme for a time :math:`\Delta t`:
 
 .. math::
 
-    \mathbf{v}(t + \Delta t/2) = \mathbf{v}(t) + (\mathbf{f}/m) \Delta t / 2
-    \mathbf{r}(t+\Delta t) = \mathbf{r}(t) + \mathbf{v}(t+\Delta t/2) \Delta t
-    \mathbf{v}(t + \Delta t) = \mathbf{v}(t + \Delta t/2) + (\mathbf{f}/m) \Delta t / 2
+    \mathbf{v}(t + \Delta t/2) &= \mathbf{v}(t) + (\mathbf{f}/m)(\Delta t / 2)
+
+    \mathbf{r}(t+\Delta t) &= \mathbf{r}(t) + \mathbf{v}(t+\Delta t/2) \Delta t
+
+    \mathbf{v}(t + \Delta t) &= \mathbf{v}(t + \Delta t/2) + (\mathbf{f}/m)(\Delta t / 2)
 
 where **r** and **v** are the particle position and velocity, respectively, and **f**
 is the external force acting on the particles of mass *m*. For a list of forces
-that can be applied, see :py:mod:`~.mpcd.force`.
+that can be applied, see :py:mod:`.mpcd.force`.
 
 Since one of the main strengths of the MPCD algorithm is that it can be coupled to
 complex boundaries, the streaming geometry can be configured. MPCD solvent particles

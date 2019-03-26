@@ -45,7 +45,7 @@ class constant(_force):
 
     The same constant-force is applied to all particles, independently of time
     and their positions. This force is useful for simulating pressure-driven
-    flow in conjunction with a confined geometry (e.g., :py:class:`~stream.slit`)
+    flow in conjunction with a confined geometry (e.g., :py:class:`~.stream.slit`)
     having no-slip boundary conditions.
 
     Examples::
