@@ -6,9 +6,12 @@
 #ifndef HOOMD_MPCD_TEST_EXTERNAL_FIELD_TEST_CUH_
 #define HOOMD_MPCD_TEST_EXTERNAL_FIELD_TEST_CUH_
 
-#include "hoomd/mpcd/ExternalField.h"
 #include "hoomd/HOOMDMath.h"
+#include "hoomd/mpcd/ExternalField.h"
 
-cudaError_t test_field(Scalar3* out, const mpcd::ExternalField* field, const Scalar3* pos, const unsigned int N);
+namespace gpu
+{
+cudaError_t test_external_field(Scalar3* out, const mpcd::ExternalField* field, const Scalar3* pos, const unsigned int N);
+} // end namespace gpu
 
 #endif // HOOMD_MPCD_TEST_EXTERNAL_FIELD_TEST_CUH_
