@@ -15,6 +15,7 @@
 class ArithmeticOperator
     {
     public:
+        HOSTDEVICE virtual ~ArithmeticOperator() {}
         HOSTDEVICE virtual int call(int b) const = 0;
     };
 

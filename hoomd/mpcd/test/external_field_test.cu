@@ -26,3 +26,9 @@ cudaError_t test_external_field(Scalar3* out, const mpcd::ExternalField* field, 
     return cudaSuccess;
     }
 } // end namespace gpu
+
+// explicitly instantiating this here seems to fix the illegal instruction error
+// this error also doesn't show up when compiled in debug mode
+// is this a compiler bug, or are we doing something illegal?
+template mpcd::ConstantForce* hoomd::gpu::device_new(Scalar3);
+template void hoomd::gpu::device_delete(mpcd::ExternalField*);

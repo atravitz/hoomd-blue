@@ -26,6 +26,7 @@ namespace mpcd
 class ExternalField
     {
     public:
+        HOSTDEVICE virtual ~ExternalField() {}
         HOSTDEVICE virtual Scalar3 evaluate(const Scalar3& r) const = 0;
     };
 

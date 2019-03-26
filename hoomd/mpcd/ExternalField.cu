@@ -12,3 +12,4 @@
 #include "hoomd/GPUPolymorph.cuh"
 
 template mpcd::ConstantForce* hoomd::gpu::device_new(Scalar3);
+template void hoomd::gpu::device_delete(mpcd::ExternalField*);
