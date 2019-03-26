@@ -53,6 +53,8 @@ __global__ void device_construct(void* data, Args... args)
 template<class T>
 __global__ void device_destroy(T* data)
     {
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index != 0) return;
     data->~T();
     }
 } // end namespace kernel
