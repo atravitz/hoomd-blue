@@ -163,7 +163,7 @@ class _streaming_method(hoomd.meta._metadata):
         """ Set the external force field for streaming.
 
         Args:
-            force (:py:module:`.mpcd.force`): External force field to apply to MPCD particles.
+            force (:py:mod:`.mpcd.force`): External force field to apply to MPCD particles.
 
         Setting an external *force* will generate a flow of the MPCD particles subject to the
         boundary conditions of the streaming geometry. Note that the force field should be
@@ -172,7 +172,7 @@ class _streaming_method(hoomd.meta._metadata):
 
         Warning:
             The *force* applies only to the MPCD particles. If you have embedded
-            particles, you should usually additionally specify a force from :py:module:`.md.force`
+            particles, you should usually additionally specify a force from :py:mod:`.md.force`
             for that particle group.
 
         Examples::
