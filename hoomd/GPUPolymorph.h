@@ -134,15 +134,14 @@ class GPUPolymorph
          * \tparam Args Argument types for constructor of \a Derived object to call.
          * \param args Argument values to construct \a Derived object.
          *
-         * The host-memory copy is allocated and initialized using the new keyword with perfect-forwarding of \a args.
-         * If CUDA is available for the execution configuration, the device-memory object is created by
-         * hoomd::gpu::device_new with perfect-forwarding of \a args.
+         * The host-memory copy is allocated and initialized using the new keyword. If CUDA is available
+         * for the execution configuration, the device-memory object is created by hoomd::gpu::device_new.
          *
          * \a Derived must be derived from \a Base, and \a Derived must be trivially destructible.
          * A compile-time assertion will fail otherwise.
          */
         template<class Derived, typename ...Args>
-        void reset(Args&&... args)
+        void reset(Args... args)
             {
             static_assert(std::is_base_of<Base,Derived>::value, "Polymorph must be derived from Base.");
             static_assert(std::is_trivially_destructible<Derived>::value, "Derived polymorph must be trivially destructible.");
@@ -150,11 +149,12 @@ class GPUPolymorph
             m_exec_conf->msg->notice(4) << "Resetting GPUPolymorph [Derived = " << typeid(Derived).name()
                                        << ", Base = " << typeid(Base).name() << "] (" << sizeof(Derived) << " bytes)" << std::endl;
 
-            m_host_data.reset(new Derived(std::forward<Args>(args)...));
+            m_host_data.reset(new Derived(args...));
             #ifdef ENABLE_CUDA
             if (m_exec_conf->isCUDAEnabled())
                 {
-                m_device_data.reset(gpu::device_new<Derived>(std::forward<Args>(args)...));
+                m_device_data.reset(gpu::device_new<Derived>(args...));
+                CHECK_CUDA_ERROR();
                 }
             #endif // ENABLE_CUDA
             }

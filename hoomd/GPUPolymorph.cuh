@@ -39,7 +39,7 @@ namespace kernel
  * \sa hoomd::gpu::device_new
  */
 template<class T, typename ...Args>
-__global__ void device_new(T* data, Args... args)
+__global__ void device_new(void* data, Args... args)
     {
     const int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index != 0) return;
@@ -66,11 +66,11 @@ __global__ void device_new(T* data, Args... args)
 template<class T, typename ...Args>
 T* device_new(Args... args)
     {
-    T* data = nullptr;
-    cudaMalloc((void**)&data, sizeof(T));
+    void* data;
+    cudaMalloc(&data, sizeof(T));
     kernel::device_new<T,typename std::remove_reference<Args>::type...><<<1,1>>>(data, args...);
     cudaDeviceSynchronize();
-    return data;
+    return reinterpret_cast<T*>(data);
     }
 #endif // NVCC
 

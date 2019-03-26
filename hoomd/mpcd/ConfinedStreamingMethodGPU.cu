@@ -11,6 +11,9 @@
 #include "ConfinedStreamingMethodGPU.cuh"
 #include "StreamingGeometry.h"
 
+#include "ExternalField.h"
+#include "hoomd/GPUPolymorph.cuh"
+
 namespace mpcd
 {
 namespace gpu
