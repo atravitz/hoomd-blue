@@ -12,9 +12,12 @@
 #include "hoomd/GPUArray.h"
 
 #include "hoomd/GPUPolymorph.h"
+#include "hoomd/mpcd/ExternalField.h"
 #ifdef ENABLE_CUDA
 #include "external_field_test.cuh"
 #endif // ENABLE_CUDA
+
+#include <vector>
 
 #include "hoomd/test/upp11_config.h"
 HOOMD_UP_MAIN();
