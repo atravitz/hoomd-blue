@@ -102,7 +102,8 @@ if (ENABLE_CUDA)
     #
     # The easiest way to do this correctly was by compiling a separate shared library with all the CUDA stuff.
     # This means that plugins linking against _mpcd will also need to link mpcdcuda AND use separable compilation for
-    # their CUDA parts using functions from _mpcd. There doesn't seem to be another way around this issue.
+    # their CUDA parts using functions from _mpcd. There doesn't seem to be another way around this issue, and it is
+    # glitchy at best even in HOOMD's internal tests. This might be resolved using first-class CUDA support in CMake.
     set(CUDA_SEPARABLE_COMPILATION ON)
     # seem to need to inject fPIC here. fortunately, all of HOOMD's compilers should take this option.
     CUDA_ADD_LIBRARY(mpcdcuda ${_mpcd_cu_sources} SHARED OPTIONS "${CUDA_ADDITIONAL_OPTIONS};--compiler-options=-fPIC")
