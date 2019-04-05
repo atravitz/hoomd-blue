@@ -98,10 +98,17 @@ set(_mpcd_cu_sources
     )
 
 if (ENABLE_CUDA)
-CUDA_COMPILE(_CUDA_GENERATED_FILES ${_mpcd_cu_sources} OPTIONS ${CUDA_ADDITIONAL_OPTIONS} SHARED)
+    # Separable compilation is needed to support ExternalField.cu polymorphism.
+    #
+    # The easiest way to do this correctly was by compiling a separate shared library with all the CUDA stuff.
+    # This means that plugins linking against _mpcd will also need to link mpcdcuda AND use separable compilation for
+    # their CUDA parts using functions from _mpcd. There doesn't seem to be another way around this issue.
+    set(CUDA_SEPARABLE_COMPILATION ON)
+    # seem to need to inject fPIC here. fortunately, all of HOOMD's compilers should take this option.
+    CUDA_ADD_LIBRARY(mpcdcuda ${_mpcd_cu_sources} SHARED OPTIONS "${CUDA_ADDITIONAL_OPTIONS};--compiler-options=-fPIC")
 endif (ENABLE_CUDA)
 
-pybind11_add_module(_mpcd SHARED ${_mpcd_sources} ${_CUDA_GENERATED_FILES} NO_EXTRAS)
+pybind11_add_module(_mpcd SHARED ${_mpcd_sources} NO_EXTRAS)
 if (APPLE)
 set_target_properties(_mpcd PROPERTIES INSTALL_RPATH "@loader_path/..;@loader_path/../md;@loader_path")
 else()
@@ -110,6 +117,9 @@ endif()
 
 # link the library to its dependencies
 target_link_libraries(_mpcd PRIVATE _md ${HOOMD_LIBRARIES})
+if (ENABLE_CUDA)
+    target_link_libraries(_mpcd PUBLIC mpcdcuda)
+endif (ENABLE_CUDA)
 
 # if we are compiling with MPI support built in, set appropriate
 # compiler/linker flags
@@ -123,9 +133,10 @@ if (ENABLE_MPI)
 endif(ENABLE_MPI)
 
 fix_cudart_rpath(_mpcd)
+fix_cudart_rpath(mpcd_cuda)
 
 # install the library
-install(TARGETS _mpcd
+install(TARGETS _mpcd mpcdcuda
         LIBRARY DESTINATION ${PYTHON_MODULE_BASE_DIR}/mpcd
         )
 

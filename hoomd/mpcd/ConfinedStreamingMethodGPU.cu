@@ -14,11 +14,6 @@
 #include "ExternalField.h"
 #include "hoomd/GPUPolymorph.cuh"
 
-// explicitly instantiating this here seems to fix the illegal instruction error
-// this error also doesn't show up when compiled in debug mode
-// is this a compiler bug, or are we doing something illegal?
-TEMPLATE_DEVICE_NEW_FIELDS;
-
 namespace mpcd
 {
 namespace gpu

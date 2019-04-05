@@ -35,11 +35,6 @@ namespace mpcd
  * You should then add an appropriate overloaded ::reset() method to ExternalField.cc to
  * export the field to python. Then, add the python class to construct it. See ConstantForce
  * as an example.
- *
- * \warning
- * There is currently a strange behavior with the external fields in CUDA code. In addition
- * to templating device_new here, you should also template it in any classes making use of
- * the ExternalField by adding it to the TEMPLATE_DEVICE_NEW_FIELDS macro. This may be revised in future.
  */
 class ExternalField
     {
@@ -123,12 +118,6 @@ class SineForce : public ExternalField
         Scalar m_F; //!< Force constant
         Scalar m_k; //!< Wavenumber for force in z
     };
-
-#ifdef NVCC
-#define TEMPLATE_DEVICE_NEW_FIELDS \
-template mpcd::ConstantForce* hoomd::gpu::device_new(Scalar3); \
-template mpcd::SineForce* hoomd::gpu::device_new(Scalar,Scalar);
-#endif // NVCC
 
 #ifndef NVCC
 namespace detail
