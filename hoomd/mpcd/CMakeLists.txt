@@ -133,12 +133,17 @@ if (ENABLE_MPI)
 endif(ENABLE_MPI)
 
 fix_cudart_rpath(_mpcd)
-fix_cudart_rpath(mpcd_cuda)
+fix_cudart_rpath(mpcdcuda)
 
 # install the library
-install(TARGETS _mpcd mpcdcuda
+install(TARGETS _mpcd
         LIBRARY DESTINATION ${PYTHON_MODULE_BASE_DIR}/mpcd
         )
+if (ENABLE_CUDA)
+install(TARGETS mpcdcuda
+        LIBRARY DESTINATION ${PYTHON_MODULE_BASE_DIR}/mpcd
+        )
+endif (ENABLE_CUDA)
 
 ################ Python only modules
 # copy python modules to the build directory to make it a working python package
