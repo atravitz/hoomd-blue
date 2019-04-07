@@ -42,22 +42,20 @@ endif()
 
 macro(compile_test TEST_EXE TEST_SRC)
     # check for extra cuda files
-    # in principle, separable compilation should work (except when it doesn't)
-    set(TEST_LINK_CUDA FALSE)
     if(ENABLE_CUDA AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_EXE}.cu)
-        set(CUDA_SEPARABLE_COMPILATION ON)
+        set(CUDA_SEPARABLE_COMPILATION OFF)
         CUDA_COMPILE(_CUDA_GENERATED_FILES ${TEST_EXE}.cu OPTIONS ${CUDA_ADDITIONAL_OPTIONS})
-        CUDA_COMPUTE_SEPARABLE_COMPILATION_OBJECT_FILE_NAME(LINK_OBJ ${TEST_EXE} ${_CUDA_GENERATED_FILES})
-        CUDA_LINK_SEPARABLE_COMPILATION_OBJECTS(${LINK_OBJ} ${TEST_EXE} "${CUDA_ADDITIONAL_OPTIONS}" "${_CUDA_GENERATED_FILES}")
     else()
         set(_CUDA_GENERATED_FILES "")
-        set(LINK_OBJ "")
     endif()
 
     # add and link the unit test executable
-    add_executable(${TEST_EXE} EXCLUDE_FROM_ALL ${TEST_SRC} ${LINK_OBJ} ${_CUDA_GENERATED_FILES})
+    add_executable(${TEST_EXE} EXCLUDE_FROM_ALL ${TEST_SRC} ${_CUDA_GENERATED_FILES})
     add_dependencies(test_all ${TEST_EXE})
     target_link_libraries(${TEST_EXE} _mpcd _md ${HOOMD_LIBRARIES} ${PYTHON_LIBRARIES})
+    if (ENABLE_CUDA)
+        target_link_libraries(${TEST_EXE} ${CUDA_cudadevrt_LIBRARY})
+    endif (ENABLE_CUDA)
     fix_cudart_rpath(${TEST_EXE})
 
     if (ENABLE_MPI)
