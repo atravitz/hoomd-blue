@@ -99,17 +99,15 @@ set(_mpcd_cu_sources
 
 if (ENABLE_CUDA)
     # Separable compilation is needed to support ExternalField.cu polymorphism.
-    #
-    # The easiest way to do this correctly was by compiling a separate shared library with all the CUDA stuff.
-    # This means that plugins linking against _mpcd will also need to link mpcdcuda AND use separable compilation for
-    # their CUDA parts using functions from _mpcd. There doesn't seem to be another way around this issue, and it is
-    # glitchy at best even in HOOMD's internal tests. This might be resolved using first-class CUDA support in CMake.
+    # This likely breaks plugin support though. :-(
     set(CUDA_SEPARABLE_COMPILATION ON)
     # seem to need to inject fPIC here. fortunately, all of HOOMD's compilers should take this option.
-    CUDA_ADD_LIBRARY(mpcdcuda ${_mpcd_cu_sources} SHARED OPTIONS "${CUDA_ADDITIONAL_OPTIONS};--compiler-options=-fPIC")
+    CUDA_COMPILE(_CUDA_GENERATED_FILES ${_mpcd_cu_sources} OPTIONS ${CUDA_ADDITIONAL_OPTIONS} SHARED)
+    CUDA_COMPUTE_SEPARABLE_COMPILATION_OBJECT_FILE_NAME(LINK_OBJ _mpcd ${_CUDA_GENERATED_FILES})
+    CUDA_LINK_SEPARABLE_COMPILATION_OBJECTS(${LINK_OBJ} _mpcd "${CUDA_ADDITIONAL_OPTIONS};--compiler-options=-fPIC" "${_CUDA_GENERATED_FILES}")
 endif (ENABLE_CUDA)
 
-pybind11_add_module(_mpcd SHARED ${_mpcd_sources} NO_EXTRAS)
+pybind11_add_module(_mpcd SHARED ${_mpcd_sources} ${LINK_OBJ} ${_CUDA_GENERATED_FILES} NO_EXTRAS)
 if (APPLE)
 set_target_properties(_mpcd PROPERTIES INSTALL_RPATH "@loader_path/..;@loader_path/../md;@loader_path")
 else()
@@ -119,7 +117,7 @@ endif()
 # link the library to its dependencies
 target_link_libraries(_mpcd PRIVATE _md ${HOOMD_LIBRARIES})
 if (ENABLE_CUDA)
-    target_link_libraries(_mpcd PUBLIC mpcdcuda)
+    target_link_libraries(_mpcd PRIVATE ${CUDA_cudadevrt_LIBRARY})
 endif (ENABLE_CUDA)
 
 # if we are compiling with MPI support built in, set appropriate
@@ -134,17 +132,11 @@ if (ENABLE_MPI)
 endif(ENABLE_MPI)
 
 fix_cudart_rpath(_mpcd)
-fix_cudart_rpath(mpcdcuda)
 
 # install the library
 install(TARGETS _mpcd
         LIBRARY DESTINATION ${PYTHON_MODULE_BASE_DIR}/mpcd
         )
-if (ENABLE_CUDA)
-install(TARGETS mpcdcuda
-        LIBRARY DESTINATION ${PYTHON_MODULE_BASE_DIR}/mpcd
-        )
-endif (ENABLE_CUDA)
 
 ################ Python only modules
 # copy python modules to the build directory to make it a working python package
