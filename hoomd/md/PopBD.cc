@@ -46,6 +46,7 @@ PopBD::PopBD(std::shared_ptr<SystemDefinition> sysdef,
     // access the bond data for later use
     m_bond_data = m_sysdef->getBondData();
 
+    // create arrays for counting loops on particles
     int n_particles = m_pdata->getN();
     m_nloops.resize(n_particles);
     m_delta_nloops.resize(n_particles);
@@ -56,6 +57,8 @@ PopBD::PopBD(std::shared_ptr<SystemDefinition> sysdef,
     GPUArray<Scalar4> params(m_bond_data->getNTypes(), m_exec_conf);
     m_params.swap(params);
     assert(!m_tables.isNull());
+
+    // record all initial bonds
 
     // helper to compute indices
     Index2D table_value(m_tables.getPitch(),m_bond_data->getNTypes());
@@ -189,19 +192,6 @@ void PopBD::update(unsigned int timestep)
 
             if (rsq < r_cut_sq)
                 {
-                // count the number of bonds between i and j
-                // int n_bonds = h_gpu_n_bonds.data[i];
-                // int nbridges_ij = 0;
-                // for (int bond_number = 0; bond_number < n_bonds; bond_number++)
-                //     {
-                //     group_storage<2> current_bond = h_gpu_bondlist.data[gpu_table_indexer(i, bond_number)];
-                //     int bonded_idx = current_bond.idx[0]; // bonded-particle's index
-                //     if (bonded_idx == j)
-                //         {
-                //         nbridges_ij += 1;
-                //         }
-                //     }
-
                 Scalar r = sqrt(rsq);
 
                 // compute index into the table and read in values
@@ -241,20 +231,20 @@ void PopBD::update(unsigned int timestep)
                 Scalar L = L0 + f * (L1 - L0);
 
 
-
+                int nbridges_ij = m_nbonds[std::pair<int,int>(i,j)];
                 // (1) Compute P_ij, P_ji, and Q_ij
 
                 Scalar p0 = m_delta_t * L;
                 Scalar q0 = m_delta_t * M;
 
-                Scalar p_ij = m_nloops[i] * p0 * pow((1 - p0), m_nloops[i]-1.0);
-                Scalar p_ji = m_nloops[j] * p0 * pow((1 - p0), m_nloops[j]-1.0);
+                Scalar p_ij = m_nloops[i] * p0 * pow((1 - p0), m_nloops[i] - 1.0);
+                Scalar p_ji = m_nloops[j] * p0 * pow((1 - p0), m_nloops[j] - 1.0);
                 Scalar q_ij = nbridges_ij * q0 * pow((1 - q0), nbridges_ij - 1.0);
 
                 // check that P and Q are reasonable
                 if (p_ij < 0 ||p_ji < 0 || q_ij < 0 || p_ij > 1 ||p_ji > 1 || q_ij > 1)
                     {
-                    throw runtime_error("p or q is incorrect!");
+                    throw runtime_error("p and q must be between 0 and 1!");
                     }
 
                 // (2) generate random numbers
@@ -266,14 +256,16 @@ void PopBD::update(unsigned int timestep)
                 // (3) check to see if a loop on i should form a bridge btwn particles i and j
                 if (rnd1 < p_ij && m_nloops[i] >= 1)
                     {
-                    m_bond_data->addBondedGroup(Bond(0, h_tag.data[i], h_tag.data[j]));
+                    // m_bond_data->addBondedGroup(Bond(0, h_tag.data[i], h_tag.data[j]));
+                    m_delta_nbonds[std::pair<int,int>(i,j)] += 1;
                     m_delta_nloops[i] -= 1;
                     }
 
                 // (4) check to see if a loop on j should form a bridge btwn particlesi and j
                 if (rnd2 < p_ji && m_nloops[j] >= 1)
                     {
-                    m_bond_data->addBondedGroup(Bond(0, h_tag.data[i], h_tag.data[j]));
+                    m_delta_nbonds[std::pair<int,int>(i,j)] += 1;
+                    // m_bond_data->addBondedGroup(Bond(0, h_tag.data[i], h_tag.data[j]));
                     m_delta_nloops[j] -= 1;
                     }
 
@@ -300,7 +292,8 @@ void PopBD::update(unsigned int timestep)
                         if ((idx_a == i && idx_b == j) || (idx_a == j & idx_b == i))
                             {
                             // remove bond with tag "bond_number" between particles i and j, then leave the loop
-                            m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
+                            m_delta_nbonds[std::pair<int,int>(i,j)] -= 1;
+                            // m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
                             break;
                             }
                         }
