@@ -151,19 +151,20 @@ void PopBD::update(unsigned int timestep)
 
     Scalar r_cut_sq = m_r_cut * m_r_cut;
 
-    // Access the GPU bond table for reading
-    // const Index2D &gpu_table_indexer = this->m_bond_data->getGPUTableIndexer();
-    ArrayHandle<BondData::members_t> h_gpu_bondlist(this->m_bond_data->getGPUTable(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_gpu_n_bonds(this->m_bond_data->getNGroupsArray(), access_location::host, access_mode::read);
-
-    // Access the CPU bond table for reading
-    // ArrayHandle<typename BondData::members_t> h_bonds(m_bond_data->getMembersArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_bond_tags(m_bond_data->getTags(), access_location::host, access_mode::read);
-
     int type = 0;
     // for each particle
     for (int i = 0; i < (int)m_pdata->getN(); i++)
         {
+
+        // Access the GPU bond table for reading
+        // const Index2D &gpu_table_indexer = this->m_bond_data->getGPUTableIndexer();
+        ArrayHandle<BondData::members_t> h_gpu_bondlist(this->m_bond_data->getGPUTable(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_gpu_n_bonds(this->m_bond_data->getNGroupsArray(), access_location::host, access_mode::read);
+
+        // Access the CPU bond table for reading
+        // ArrayHandle<typename BondData::members_t> h_bonds(m_bond_data->getMembersArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_bond_tags(m_bond_data->getTags(), access_location::host, access_mode::read);
+
         // initialize the RNG
         detail::Saru saru(i, timestep, m_seed);
 
@@ -231,6 +232,7 @@ void PopBD::update(unsigned int timestep)
 
                 int nbridges_ij = m_nbonds[std::pair<int,int>(i,j)];
 
+
                 // (1) Compute P_ij, P_ji, and Q_ij
 
                 Scalar p0 = m_delta_t * L;
@@ -240,10 +242,16 @@ void PopBD::update(unsigned int timestep)
                 Scalar p_ji = m_nloops[j] * p0 * pow((1 - p0), m_nloops[j] - 1.0);
                 Scalar q_ij = nbridges_ij * q0 * pow((1 - q0), nbridges_ij - 1.0);
 
+                cout << "p_ij = " << p_ij << "\n";
+                // cout << "m_nloops[i] = " << m_nloops[i] << "\n";
+                cout << "p_ji = " << p_ji << "\n";
+                cout << "m_nloops[j] = " << m_nloops[j] << "\n";
+                cout << "q_ij = " << q_ij << "\n";
+                cout << "nbridges[i,j] = " << nbridges_ij << "\n";
                 // check that P and Q are reasonable
                 if (p_ij < 0 ||p_ji < 0 || q_ij < 0 || p_ij > 1 ||p_ji > 1 || q_ij > 1)
                     {
-                    throw runtime_error("p and q must be between 0 and 1!");
+                    throw runtime_error("p and q must be between 0 and 1! \n");
                     }
 
                 // (2) generate random numbers
@@ -279,53 +287,53 @@ void PopBD::update(unsigned int timestep)
                         m_delta_nloops[j] += 1;
                         }
                     }
-                }
-            }
-        }
-    // update loop counts
-    std::transform(m_nloops.begin(), m_nloops.end(), m_delta_nloops.begin(), m_nloops.begin(), std::plus<int>());
+                // update loop counts
+                std::transform(m_nloops.begin(), m_nloops.end(), m_delta_nloops.begin(), m_nloops.begin(), std::plus<int>());
 
-    // add and delete bonds
-    for (auto it = m_delta_nbonds.begin(); it != m_delta_nbonds.end(); it++)
-        {
-        int delta_bonds = it->second;
-        int i = std::get<0>(it->first);
-        int j = std::get<1>(it->first);
-
-        if (delta_bonds > 0)
-            {
-            // create bonds
-            for (int n = 0; n < delta_bonds; n++)
-                {
-                m_bond_data->addBondedGroup(Bond(type, h_tag.data[i], h_tag.data[j]));
-                }
-            }
-        else if (delta_bonds < 0)
-            {
-            for (int n = 0; n < -delta_bonds; n++)
-                {
-                // remove one bond between i and j
-                // iterate over each of the bonds in the *system*
-                const unsigned int size = (unsigned int)m_bond_data->getN();
-                for (unsigned int bond_number = 0; bond_number < size; bond_number++)
+                // add and delete bonds
+                for (auto it = m_delta_nbonds.begin(); it != m_delta_nbonds.end(); it++)
                     {
-                    // look up the tag of both of the particles participating in the bond
-                    const BondData::members_t bond = m_bond_data->getMembersByIndex(bond_number);
-                    assert(bond.tag[0] < m_pdata->getN());
-                    assert(bond.tag[1] < m_pdata->getN());
+                    int delta_bonds = it->second;
+                    int i = std::get<0>(it->first);
+                    int j = std::get<1>(it->first);
 
-                    // transform a and b into indices into the particle data arrays
-                    // (MEM TRANSFER: 4 integers)
-                    unsigned int idx_a = h_rtag.data[bond.tag[0]];
-                    unsigned int idx_b = h_rtag.data[bond.tag[1]];
-                    assert(idx_a <= m_pdata->getMaximumTag());
-                    assert(idx_b <= m_pdata->getMaximumTag());
-
-                    if ((idx_a == i && idx_b == j) || (idx_a == j & idx_b == i))
+                    if (delta_bonds > 0)
                         {
-                        // remove bond with tag "bond_number" between particles i and j, then leave the loop
-                        m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
-                        break;
+                        // create bonds
+                        for (int n = 0; n < delta_bonds; n++)
+                            {
+                            m_bond_data->addBondedGroup(Bond(type, h_tag.data[i], h_tag.data[j]));
+                            }
+                        }
+                    else if (delta_bonds < 0)
+                        {
+                        for (int n = 0; n < -delta_bonds; n++)
+                            {
+                            // remove one bond between i and j
+                            // iterate over each of the bonds in the *system*
+                            const unsigned int size = (unsigned int)m_bond_data->getN();
+                            for (unsigned int bond_number = 0; bond_number < size; bond_number++)
+                                {
+                                // look up the tag of both of the particles participating in the bond
+                                const BondData::members_t bond = m_bond_data->getMembersByIndex(bond_number);
+                                assert(bond.tag[0] < m_pdata->getN());
+                                assert(bond.tag[1] < m_pdata->getN());
+
+                                // transform a and b into indices into the particle data arrays
+                                // (MEM TRANSFER: 4 integers)
+                                unsigned int idx_a = h_rtag.data[bond.tag[0]];
+                                unsigned int idx_b = h_rtag.data[bond.tag[1]];
+                                assert(idx_a <= m_pdata->getMaximumTag());
+                                assert(idx_b <= m_pdata->getMaximumTag());
+
+                                if ((idx_a == i && idx_b == j) || (idx_a == j & idx_b == i))
+                                    {
+                                    // remove bond with tag "bond_number" between particles i and j, then leave the loop
+                                    m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
+                                    break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
