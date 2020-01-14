@@ -88,6 +88,7 @@ void PopBD::setTable(const std::vector<Scalar> &XB,
                      Scalar rmax)
     {
     int type = 0;
+
     // access the arrays
     ArrayHandle<Scalar2> h_tables(m_tables, access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_params(m_params, access_location::host, access_mode::readwrite);
@@ -155,6 +156,8 @@ void PopBD::update(unsigned int timestep)
     // for each particle
     for (int i = 0; i < (int)m_pdata->getN(); i++)
         {
+        m_delta_nbonds.clear();
+        m_delta_nloops.clear();
 
         // Access the GPU bond table for reading
         // const Index2D &gpu_table_indexer = this->m_bond_data->getGPUTableIndexer();
@@ -170,8 +173,8 @@ void PopBD::update(unsigned int timestep)
 
         // access the particle's position and type (MEM TRANSFER: 4 scalars)
         Scalar3 pi = make_scalar3(h_pos.data[i].x, h_pos.data[i].y, h_pos.data[i].z);
+
         // loop over all of the neighbors of this particle
-        // TODO: make sure all eligible bonding particles are within the search radius
         const unsigned int myHead = h_head_list.data[i];
         const unsigned int size = (unsigned int)h_n_neigh.data[i];
         for (unsigned int k = 0; k < size; k++)
@@ -195,7 +198,6 @@ void PopBD::update(unsigned int timestep)
                 Scalar r = sqrt(rsq);
 
                 // compute index into the table and read in values
-                // access needed parameters
 
                 // unsigned int type = m_bond_data->getTypeByIndex(i);
                 Scalar4 params = h_params.data[type];
@@ -229,11 +231,9 @@ void PopBD::update(unsigned int timestep)
                 Scalar M = M0 + f * (M1 - M0);
                 Scalar L = L0 + f * (L1 - L0);
 
+                // (1) Compute P_ij, P_ji, and Q_ij
 
                 int nbridges_ij = m_nbonds[std::pair<int,int>(i,j)];
-
-
-                // (1) Compute P_ij, P_ji, and Q_ij
 
                 Scalar p0 = m_delta_t * L;
                 Scalar q0 = m_delta_t * M;
@@ -242,15 +242,17 @@ void PopBD::update(unsigned int timestep)
                 Scalar p_ji = m_nloops[j] * p0 * pow((1 - p0), m_nloops[j] - 1.0);
                 Scalar q_ij = nbridges_ij * q0 * pow((1 - q0), nbridges_ij - 1.0);
 
-                cout << "p_ij = " << p_ij << "\n";
-                // cout << "m_nloops[i] = " << m_nloops[i] << "\n";
-                cout << "p_ji = " << p_ji << "\n";
-                cout << "m_nloops[j] = " << m_nloops[j] << "\n";
-                cout << "q_ij = " << q_ij << "\n";
-                cout << "nbridges[i,j] = " << nbridges_ij << "\n";
+
+
                 // check that P and Q are reasonable
                 if (p_ij < 0 ||p_ji < 0 || q_ij < 0 || p_ij > 1 ||p_ji > 1 || q_ij > 1)
                     {
+                    // cout << "p_ij = " << p_ij << "\n";
+                    cout << "m_nloops[i] = " << m_nloops[i] << "\n";
+                    // cout << "p_ji = " << p_ji << "\n";
+                    cout << "m_nloops[j] = " << m_nloops[j] << "\n";
+                    // cout << "q_ij = " << q_ij << "\n";
+                    cout << "nbridges[i,j] = " << nbridges_ij << "\n";
                     throw runtime_error("p and q must be between 0 and 1! \n");
                     }
 
@@ -303,6 +305,7 @@ void PopBD::update(unsigned int timestep)
                         for (int n = 0; n < delta_bonds; n++)
                             {
                             m_bond_data->addBondedGroup(Bond(type, h_tag.data[i], h_tag.data[j]));
+                            m_nbonds[std::pair<int,int>(i,j)] += 1;
                             }
                         }
                     else if (delta_bonds < 0)
@@ -330,6 +333,7 @@ void PopBD::update(unsigned int timestep)
                                     {
                                     // remove bond with tag "bond_number" between particles i and j, then leave the loop
                                     m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
+                                    m_nbonds[std::pair<int,int>(i,j)] -= 1;
                                     break;
                                     }
                                 }
