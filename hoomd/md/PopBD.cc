@@ -49,7 +49,6 @@ PopBD::PopBD(std::shared_ptr<SystemDefinition> sysdef,
     // create arrays for counting loops on particles
     int n_particles = m_pdata->getN();
     m_nloops.resize(n_particles);
-    m_delta_nloops.resize(n_particles);
 
     // allocate storage for the tables and parameters
     GPUArray<Scalar2> tables(m_table_width, m_bond_data->getNTypes(), m_exec_conf);
@@ -156,8 +155,6 @@ void PopBD::update(unsigned int timestep)
     // for each particle
     for (int i = 0; i < (int)m_pdata->getN(); i++)
         {
-        m_delta_nbonds.clear();
-        m_delta_nloops.clear();
 
         // Access the GPU bond table for reading
         // const Index2D &gpu_table_indexer = this->m_bond_data->getGPUTableIndexer();
@@ -265,79 +262,56 @@ void PopBD::update(unsigned int timestep)
                 // (3) check to see if a loop on i should form a bridge btwn particles i and j
                 if (rnd1 < p_ij && m_nloops[i] >= 1)
                     {
-                    m_delta_nbonds[std::pair<unsigned int, unsigned int>(i,j)] += 1;
-                    m_delta_nloops[i] -= 1;
+                    m_bond_data->addBondedGroup(Bond(type, h_tag.data[i], h_tag.data[j]));
+                    m_nbonds[std::pair<int,int>(i,j)] += 1;
+
+                    m_nloops[i] -= 1;
                     }
 
                 // (4) check to see if a loop on j should form a bridge btwn particlesi and j
                 if (rnd2 < p_ji && m_nloops[j] >= 1)
                     {
-                    m_delta_nbonds[std::pair<unsigned int, unsigned int>(i,j)] += 1;
-                    m_delta_nloops[j] -= 1;
+                    m_bond_data->addBondedGroup(Bond(type, h_tag.data[i], h_tag.data[j]));
+                    m_nbonds[std::pair<int,int>(i,j)] += 1;
+
+                    m_nloops[j] -= 1;
                     }
 
                 // (5) check to see if a bond should be broken between particles i and j
                 if (rnd3 < q_ij && nbridges_ij >= 1)
                     {
-                    m_delta_nbonds[std::pair<unsigned int,unsigned int>(i,j)] -= 1;
+                    // remove one bond between i and j
+                    // iterate over each of the bonds in the *system*
+                    const unsigned int size = (unsigned int)m_bond_data->getN();
+                    for (unsigned int bond_number = 0; bond_number < size; bond_number++)
+                        {
+                        // look up the tag of both of the particles participating in the bond
+                        const BondData::members_t bond = m_bond_data->getMembersByIndex(bond_number);
+                        assert(bond.tag[0] < m_pdata->getN());
+                        assert(bond.tag[1] < m_pdata->getN());
+
+                        // transform a and b into indices into the particle data arrays
+                        // (MEM TRANSFER: 4 integers)
+                        unsigned int idx_a = h_rtag.data[bond.tag[0]];
+                        unsigned int idx_b = h_rtag.data[bond.tag[1]];
+                        assert(idx_a <= m_pdata->getMaximumTag());
+                        assert(idx_b <= m_pdata->getMaximumTag());
+
+                        if ((idx_a == i && idx_b == j) || (idx_a == j & idx_b == i))
+                            {
+                            // remove bond with tag "bond_number" between particles i and j, then leave the loop
+                            m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
+                            m_nbonds[std::pair<int,int>(i,j)] -= 1;
+                            break;
+                            }
+                        }
                     if (rnd4 <= 0.5)
                         {
-                        m_delta_nloops[i] += 1;
+                        m_nloops[i] += 1;
                         }
                     else if (rnd4 > 0.5)
                         {
-                        m_delta_nloops[j] += 1;
-                        }
-                    }
-                // update loop counts
-                std::transform(m_nloops.begin(), m_nloops.end(), m_delta_nloops.begin(), m_nloops.begin(), std::plus<int>());
-
-                // add and delete bonds
-                for (auto it = m_delta_nbonds.begin(); it != m_delta_nbonds.end(); it++)
-                    {
-                    int delta_bonds = it->second;
-                    int i = std::get<0>(it->first);
-                    int j = std::get<1>(it->first);
-
-                    if (delta_bonds > 0)
-                        {
-                        // create bonds
-                        for (int n = 0; n < delta_bonds; n++)
-                            {
-                            m_bond_data->addBondedGroup(Bond(type, h_tag.data[i], h_tag.data[j]));
-                            m_nbonds[std::pair<int,int>(i,j)] += 1;
-                            }
-                        }
-                    else if (delta_bonds < 0)
-                        {
-                        for (int n = 0; n < -delta_bonds; n++)
-                            {
-                            // remove one bond between i and j
-                            // iterate over each of the bonds in the *system*
-                            const unsigned int size = (unsigned int)m_bond_data->getN();
-                            for (unsigned int bond_number = 0; bond_number < size; bond_number++)
-                                {
-                                // look up the tag of both of the particles participating in the bond
-                                const BondData::members_t bond = m_bond_data->getMembersByIndex(bond_number);
-                                assert(bond.tag[0] < m_pdata->getN());
-                                assert(bond.tag[1] < m_pdata->getN());
-
-                                // transform a and b into indices into the particle data arrays
-                                // (MEM TRANSFER: 4 integers)
-                                unsigned int idx_a = h_rtag.data[bond.tag[0]];
-                                unsigned int idx_b = h_rtag.data[bond.tag[1]];
-                                assert(idx_a <= m_pdata->getMaximumTag());
-                                assert(idx_b <= m_pdata->getMaximumTag());
-
-                                if ((idx_a == i && idx_b == j) || (idx_a == j & idx_b == i))
-                                    {
-                                    // remove bond with tag "bond_number" between particles i and j, then leave the loop
-                                    m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
-                                    m_nbonds[std::pair<int,int>(i,j)] -= 1;
-                                    break;
-                                    }
-                                }
-                            }
+                        m_nloops[j] += 1;
                         }
                     }
                 }
