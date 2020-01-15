@@ -55,7 +55,9 @@ class popbd(_updater):
 
     def set_params(self, r_cut, bond_type, n_polymer):
         self.check_initialization()
+        bond_type_idx = hoomd.context.current.system_definition.getBondData().getTypeByName(bond_type)
         self.cpp_updater.setParams(r_cut, bond_type, n_polymer)
+
         # store metadata
         # metadata_fields = ['r_cut', 'bond_type', 'prob_form', 'prob_break']
 

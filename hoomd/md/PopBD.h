@@ -58,6 +58,7 @@ protected:
     std::shared_ptr<BondData> m_bond_data;  //!< Bond data to use in computing bonds
     int period;                             //!< period to create/destroy bonds
     int bond_type;                          //!< bond type to create and break
+    int m_type;
     int m_seed;                             //!< seed for random number generator
     Scalar m_r_cut;                         //!< cut off distance for computing bonds
     unsigned int m_table_width;             //!< Width of the tables in memory
