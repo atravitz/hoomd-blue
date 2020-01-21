@@ -170,6 +170,9 @@ void PopBD::update(unsigned int timestep)
         // access the particle's position and type (MEM TRANSFER: 4 scalars)
         Scalar3 pi = make_scalar3(h_pos.data[i].x, h_pos.data[i].y, h_pos.data[i].z);
 
+        // clear bond change tracker
+        m_delta_nbonds.clear();
+
         // loop over all of the neighbors of this particle
         const unsigned int myHead = h_head_list.data[i];
         const unsigned int size = (unsigned int)h_n_neigh.data[i];
@@ -238,8 +241,6 @@ void PopBD::update(unsigned int timestep)
                 Scalar p_ji = m_nloops[j] * p0 * pow((1 - p0), m_nloops[j] - 1.0);
                 Scalar q_ij = nbridges_ij * q0 * pow((1 - q0), nbridges_ij - 1.0);
 
-
-
                 // check that P and Q are reasonable
                 if (p_ij < 0 ||p_ji < 0 || q_ij < 0 || p_ij > 1 ||p_ji > 1 || q_ij > 1)
                     {
@@ -263,6 +264,7 @@ void PopBD::update(unsigned int timestep)
                     {
                     m_bond_data->addBondedGroup(Bond(m_type, h_tag.data[i], h_tag.data[j]));
                     m_nbonds[std::pair<int,int>(i,j)] += 1;
+                    m_delta_nbonds[std::pair<int,int>(i,j)] += 1;
 
                     m_nloops[i] -= 1;
                     }
@@ -272,6 +274,7 @@ void PopBD::update(unsigned int timestep)
                     {
                     m_bond_data->addBondedGroup(Bond(m_type, h_tag.data[i], h_tag.data[j]));
                     m_nbonds[std::pair<int,int>(i,j)] += 1;
+                    m_delta_nbonds[std::pair<int,int>(i,j)] += 1;
 
                     m_nloops[j] -= 1;
                     }
@@ -280,6 +283,9 @@ void PopBD::update(unsigned int timestep)
                 if (rnd3 < q_ij && nbridges_ij >= 1)
                     {
                     // remove one bond between i and j
+                    m_nbonds[std::pair<int,int>(i,j)] -= 1;
+                    m_delta_nbonds[std::pair<int,int>(i,j)] -= 1;
+
                     // iterate over each of the bonds in the *system*
                     const unsigned int size = (unsigned int)m_bond_data->getN();
                     for (unsigned int bond_number = 0; bond_number < size; bond_number++)
@@ -300,7 +306,6 @@ void PopBD::update(unsigned int timestep)
                             {
                             // remove bond with tag "bond_number" between particles i and j, then leave the loop
                             m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
-                            m_nbonds[std::pair<int,int>(i,j)] -= 1;
                             break;
                             }
                         }
