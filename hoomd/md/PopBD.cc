@@ -159,7 +159,7 @@ void PopBD::update(unsigned int timestep)
     // ArrayHandle<typename BondData::members_t> h_bonds(m_bond_data->getMembersArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_bond_tags(m_bond_data->getTags(), access_location::host, access_mode::read);
 
-     // clear bond change tracker
+    // clear bond change tracker
     m_delta_nbonds.clear();
 
     // for each particle
@@ -195,7 +195,6 @@ void PopBD::update(unsigned int timestep)
                 Scalar r = sqrt(rsq);
 
                 // compute index into the table and read in values
-
                 // unsigned int m_type = m_bond_data->getTypeByIndex(i);
                 Scalar4 params = h_params.data[m_type];
                 Scalar rmin = params.x;
