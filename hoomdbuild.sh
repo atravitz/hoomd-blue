@@ -17,16 +17,16 @@ echo "Using compilers $($CC --version | head -n 1), $($CXX --version | head -n 1
 CMAKE_FLAGS="${CMAKE_FLAGS} -DPYTHON_EXECUTABLE=$(which python)"
 PYTHON_LIBRARY_PATH=$(python -c "import distutils.sysconfig as sysconfig; import os; print(os.path.join(sysconfig.get_config_var('LIBDIR'), sysconfig.get_config_var('LDLIBRARY')))")
 CMAKE_FLAGS="${CMAKE_FLAGS} -DPYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}"  # -DCMAKE_BUILD_TYPE=Debug"
-CMAKE_FLAGS="${CMAKE_FLAGS} -DBUILD_HPMC=OFF -DBUILD_METAL=OFF -DBUILD_CGCMM=OFF -DENABLE_CUDA=ON -DENABLE_MPI=OFF"
+CMAKE_FLAGS="${CMAKE_FLAGS} -DBUILD_HPMC=OFF -DBUILD_METAL=OFF -DBUILD_CGCMM=OFF -DENABLE_CUDA=OFF -DENABLE_MPI=OFF"
 
 # Install to the conda packages path
-CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}/lib/python3.6/site-packages"
+CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=`python -c "import site; print(site.getsitepackages()[0])"`"
 
 # link correlator
-cd ../hoomd 
+cd ../hoomd
 ln -s ../correlator-hoomd-plugin/correlator .
 cd ../build
 
-cmake ../ ${CMAKE_FLAGS} 
-make -j4  
-make install 
+cmake ../ ${CMAKE_FLAGS}
+make -j4
+make install
