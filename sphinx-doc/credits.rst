@@ -289,6 +289,14 @@ Alex Yang, Vanderbilt University
 
   * ``hoomd.md.dihedral.harmonic`` update for phase shift
 
+Geert Kapteijns, University of Amsterdam
+
+  * Bug fixes.
+
+Charlie Slominski, Caltech
+
+  * HOOMD-blue as a submodule
+
 HPMC developers
 ---------------
 
