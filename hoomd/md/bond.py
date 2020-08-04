@@ -583,3 +583,53 @@ class table(force._force):
         hoomd.util.quiet_status();
         self.bond_coeff.set(bondname, func=_table_eval, rmin=rmin_table, rmax=rmax_table, coeff=dict(V=V_table, F=F_table, width=self.width))
         hoomd.util.unquiet_status();
+
+class dynamic_cohenpade(_bond):
+    R""" Dynamic Cohen-Pade bond potential.
+
+    Args:
+        name (str): Name of the bond instance.
+
+    :py:class:`dynamic_cohenpade` specifies a Cohen-Pade potential energy between the two particles in each defined bond.
+
+    .. math::
+
+        # V(r) = \frac{1}{2} k \left( r - r_0 \right)^2
+
+    where :math:`\vec{r}` is the vector pointing from one particle to the other in the bond.
+
+    Coefficients:
+
+    - :math:`k` - force constant ``k`` (in units of energy/distance^2)
+    - :math:`r_0` - bond rest length ``r0`` (in distance units)
+
+    Example::
+
+        harmonic = bond.harmonic(name="mybond")
+        harmonic.bond_coeff.set('polymer', k=330.0, r0=0.84)
+
+    """
+    def __init__(self,name=None):
+        hoomd.util.print_status_line();
+
+        # initialize the base class
+        _bond.__init__(self);
+
+
+        # create the c++ mirror class
+        if not hoomd.context.exec_conf.isCUDAEnabled():
+            self.cpp_force = _md.PotentialBondDynamicCohenPade(hoomd.context.current.system_definition,self.name);
+        else:
+            hoomd.context.msg.error("Dynamic Cohen Pade cannot be used on GPUs");
+
+        hoomd.context.current.system.addCompute(self.cpp_force, self.force_name);
+
+        # setup the coefficient options
+        self.required_coeffs = ['nK','r_colloid'];
+
+    def process_coeff(self, coeff):
+        nK = coeff['nK'];
+        r_colloid = coeff['r_colloid'];
+
+        # set the parameters for the appropriate type
+        return _hoomd.make_scalar2(nK, r_colloid);

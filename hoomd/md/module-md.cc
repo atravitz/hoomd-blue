@@ -278,6 +278,7 @@ PYBIND11_MODULE(_md, m)
     export_PotentialPairDPDThermo<PotentialPairDPDThermoDPD, PotentialPairDPD>(m, "PotentialPairDPDThermoDPD");
     export_PotentialPair<PotentialPairDPDLJ>(m, "PotentialPairDPDLJ");
     export_PotentialPairDPDThermo<PotentialPairDPDLJThermoDPD, PotentialPairDPDLJ>(m, "PotentialPairDPDLJThermoDPD");
+    export_PotentialBond<PotentialBondDynamicCohenPade>(m, "PotentialBondDynamicCohenPade");
     export_PotentialBond<PotentialBondHarmonic>(m, "PotentialBondHarmonic");
     export_PotentialBond<PotentialBondFENE>(m, "PotentialBondFENE");
     export_PotentialSpecialPair<PotentialSpecialPairLJ>(m, "PotentialSpecialPairLJ");
