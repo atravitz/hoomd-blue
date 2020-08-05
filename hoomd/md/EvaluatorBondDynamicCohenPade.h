@@ -55,8 +55,8 @@ class EvaluatorBondDynamicCohenPade
         */
         DEVICE void setDiameter(Scalar da, Scalar db)
             {
-            diameter_a = da;
-            diameter_b = db;
+            // diameter_a = da;
+            // diameter_b = db;
             }
 
         //! Cohen-Pade doesn't use charge
