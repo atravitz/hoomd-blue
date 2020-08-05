@@ -53,7 +53,11 @@ class EvaluatorBondDynamicCohenPade
         /*! \param da Diameter of particle a
             \param db Diameter of particle b
         */
-        DEVICE void setDiameter(Scalar da, Scalar db) { }
+        DEVICE void setDiameter(Scalar da, Scalar db)
+            {
+            diameter_a = da;
+            diameter_b = db;
+            }
 
         //! Cohen-Pade doesn't use charge
         DEVICE static bool needsCharge() { return false; }
