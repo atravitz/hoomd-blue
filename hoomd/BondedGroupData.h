@@ -179,6 +179,7 @@ class BondedGroupData
                     {
                     val.resize(n_groups, 0);
                     }
+                mult.resize(n_groups, 1);
                 groups.resize(n_groups, def);
                 size = n_groups;
                 }
@@ -190,6 +191,7 @@ class BondedGroupData
                 {
                 if (has_type_mapping && groups.size() != type_id.size()) return false;
                 if (!has_type_mapping && groups.size() != val.size()) return false;
+                if (groups.size() != mult.size()) return false;
                 return true;
                 }
 
@@ -218,7 +220,8 @@ class BondedGroupData
             static pybind11::object getTypeNP(pybind11::object self);
             //! Get value as a numpy array
             static pybind11::object getValueNP(pybind11::object self);
-
+            //! Get multiplicity as a numpy array
+            static pybind11::object getMultiplicityNP(pybind11::object self);
             //! Get bonded tags as a numpy array
             static pybind11::object getBondedTagsNP(pybind11::object self);
             //! Get the type names for python
@@ -227,6 +230,7 @@ class BondedGroupData
             void setTypes(pybind11::list types);
 
             std::vector<unsigned int> type_id;             //!< Stores type for each group
+            std::vector<unsigned int> mult;                //!< Stores the multiplicity for each group
             std::vector<Scalar> val;                       //!< Stores constraint value for each group
             std::vector<members_t> groups;                 //!< Stores the data for each group
             std::vector<std::string> type_mapping;         //!< Names of group types
@@ -375,6 +379,12 @@ class BondedGroupData
             return m_group_typeval;
             }
 
+        //! Return multiplicity table (const)
+        const GPUVector<unsigned int>& getMultArray() const
+            {
+            return m_group_mult;
+            }
+
         //! Return list of group tags (const)
         const GPUVector<unsigned int>& getTags() const
             {
@@ -386,6 +396,7 @@ class BondedGroupData
             {
             return m_group_rtag;
             }
+
 
         #ifdef ENABLE_MPI
         //! Return auxiliary array of member particle ranks (const)
@@ -405,6 +416,12 @@ class BondedGroupData
         GPUVector<typeval_t>& getTypeValArray()
             {
             return m_group_typeval;
+            }
+
+        //! Return multiplicity table
+        GPUVector<unsigned int>& getMultArray()
+            {
+            return m_group_mult;
             }
 
         //! Return list of group tags
@@ -451,6 +468,14 @@ class BondedGroupData
             return m_group_typeval_alt;
             }
 
+        //! Return list of multiplicty values (swap-in)
+        GPUVector<unsigned int>& getAltMultArray()
+            {
+            // resize to size of primary groups array
+            m_group_mult_alt.resize(m_group_mult.size());
+            return m_group_mult_alt;
+            }
+
         //! Return list of group tags (swap-in)
         GPUVector<unsigned int>& getAltTags()
             {
@@ -480,6 +505,13 @@ class BondedGroupData
             {
             assert(!m_group_typeval_alt.isNull());
             m_group_typeval.swap(m_group_typeval_alt);
+            }
+
+        //! Swap group multiplicity arrays
+        void swapMultArrays()
+            {
+            assert(!m_group_mult_alt.isNull());
+            m_group_mult.swap(m_group_mult_alt);
             }
 
         //! Swap group tag arrays
@@ -615,6 +647,7 @@ class BondedGroupData
         GPUVector<typeval_t> m_group_typeval;        //!< List of group types/constraint values
         GPUVector<unsigned int> m_group_tag;         //!< List of group tags
         GPUVector<unsigned int> m_group_rtag;        //!< Global reverse-lookup table for group tags
+        GPUVector<unsigned int> m_group_mult;        //!< List of multiplicities
         GPUVector<members_t> m_gpu_table;            //!< Storage for groups by particle index for access on the GPU
         GPUVector<unsigned int> m_gpu_pos_table;     //!< Position of particle idx in group table
         Index2D m_gpu_table_indexer;                 //!< Indexer for GPU table
@@ -631,6 +664,7 @@ class BondedGroupData
         /* alternate (stand-by) arrays for swapping in reordered groups */
         GPUVector<members_t> m_groups_alt;           //!< List of groups (swap-in)
         GPUVector<typeval_t> m_group_typeval_alt;    //!< List of group types/constraint values (swap-in)
+        GPUVector<unsigned int> m_group_mult_alt;     //!< List of group multiplicities (swap-in)
         GPUVector<unsigned int> m_group_tag_alt;     //!< List of group tags (swap-in)
         #ifdef ENABLE_MPI
         GPUVector<ranks_t> m_group_ranks_alt;   //!< 2D list of group member ranks (swap-in)
@@ -750,6 +784,7 @@ struct Bond {
     unsigned int type;  //!< Group type
     unsigned int a;     //!< First bond member
     unsigned int b;     //!< Second bond member
+    unsigned int mult;  //!< Multiplicity
     };
 
 //! Definition of BondData

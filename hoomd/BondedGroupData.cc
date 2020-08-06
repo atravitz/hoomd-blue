@@ -167,6 +167,9 @@ void BondedGroupData<group_size, Group, name, has_type_mapping>::initialize()
     GPUVector<unsigned int> group_rtag(m_exec_conf);
     m_group_rtag.swap(group_rtag);
 
+    GPUVector<unsigned int> group_mult(m_exec_conf);
+    m_group_mult.swap(group_mult);
+
     // Lookup by particle index table
     GPUVector<members_t> gpu_table(m_exec_conf);
     m_gpu_table.swap(gpu_table);
@@ -194,6 +197,9 @@ void BondedGroupData<group_size, Group, name, has_type_mapping>::initialize()
 
     GPUVector<members_t> groups_alt(m_exec_conf);
     m_groups_alt.swap(groups_alt);
+
+    GPUVector<unsigned int> group_mult_alt(m_exec_conf);
+    m_group_mult_alt.swap(group_mult_alt);
 
     #ifdef ENABLE_MPI
     if (m_pdata->getDomainDecomposition())
@@ -1262,6 +1268,7 @@ template<class T, typename Group>
         py::class_<Snapshot, std::shared_ptr<Snapshot> >(m,snapshot_name.c_str())
             .def(py::init<unsigned int>())
             .def_property_readonly("value", &Snapshot::getValueNP)
+            .def_property_readonly("mult", &Snapshot::getMultiplicityNP)
             .def_property_readonly("group", &Snapshot::getBondedTagsNP)
             .def("resize", &Snapshot::resize)
             .def_readonly("N", &Snapshot::size)
@@ -1333,6 +1340,17 @@ py::object BondedGroupData<group_size, Group, name, has_type_mapping>::Snapshot:
     assert(!has_type_mapping);
     auto self_cpp = self.cast<BondedGroupData<group_size, Group, name, has_type_mapping>::Snapshot *>();
     return pybind11::array(self_cpp->val.size(), &self_cpp->val[0], self);
+    }
+
+/*! \returns a numpy array that wraps the multiplicity data element.
+    The raw data is referenced by the numpy array, modifications to the numpy array will modify the snapshot
+*/
+template<unsigned int group_size, typename Group, const char *name, bool has_type_mapping>
+py::object BondedGroupData<group_size, Group, name, has_type_mapping>::Snapshot::getMultiplicityNP(pybind11::object self)
+    {
+    assert(!has_type_mapping);
+    auto self_cpp = self.cast<BondedGroupData<group_size, Group, name, has_type_mapping>::Snapshot *>();
+    return pybind11::array(self_cpp->mult.size(), &self_cpp->mult[0], self);
     }
 
 
