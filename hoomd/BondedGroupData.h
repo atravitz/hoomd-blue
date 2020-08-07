@@ -338,6 +338,9 @@ class BondedGroupData
         //! Get the constraint value of a bonded group by index
         Scalar getValueByIndex(unsigned int group_idx) const;
 
+        //! Get the multiplicity of a bonded group by index
+        unsigned int getMultByIndex(unsigned int group_idx) const;
+
         /*
          * Access to data structures
          */
@@ -742,7 +745,7 @@ struct Bond {
      * \param _b Second bond member
      */
     Bond(unsigned int _type, unsigned int _a, unsigned int _b)
-        : type(_type), a(_a), b(_b)
+        : type(_type), a(_a), b(_b), mult(1)
         { }
 
     //! Constructor that takes a members_t (used internally by BondData)
@@ -750,7 +753,7 @@ struct Bond {
      *  \param members group members
      */
     Bond(typeval_t _typeval, members_t _members)
-        : type(_typeval.type), a(_members.tag[0]), b(_members.tag[1])
+        : type(_typeval.type), a(_members.tag[0]), b(_members.tag[1]), mult(1)
         { }
 
 
@@ -769,6 +772,11 @@ struct Bond {
         typeval_t t;
         t.type = type;
         return t;
+        }
+
+    unsigned int get_mult()
+        {
+        return mult;
         }
 
     //! This helper function needs to be provided for the templated BondData to work correctly
