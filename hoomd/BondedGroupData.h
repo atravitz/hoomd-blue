@@ -700,6 +700,7 @@ class BondedGroupData
             m_groups.resize(new_size);
             m_group_typeval.resize(new_size);
             m_group_tag.resize(new_size);
+            m_group_mult.resize(new_size);
             #ifdef ENABLE_MPI
             if (m_pdata->getDomainDecomposition())
                 {

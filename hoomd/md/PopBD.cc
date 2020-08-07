@@ -156,7 +156,6 @@ void PopBD::update(unsigned int timestep)
     ArrayHandle<typename BondData::members_t> h_bonds(m_bond_data->getMembersArray(), access_location::host, access_mode::read);
         {
         ArrayHandle<unsigned int> h_bond_tags(m_bond_data->getTags(), access_location::host, access_mode::read);
-
         // clear bond change tracker
         m_delta_nbonds.clear();
 
@@ -327,6 +326,10 @@ void PopBD::update(unsigned int timestep)
                     if ((tag_a == i_tag && tag_b == j_tag) || (tag_a == j_tag && tag_b == i_tag))
                         {
                         ArrayHandle<unsigned int> h_bond_tags(m_bond_data->getTags(), access_location::host, access_mode::read);
+                        ArrayHandle<unsigned int> h_bond_mults(m_bond_data->getMultArray(), access_location::host, access_mode::read);
+
+                        unsigned int bond_mult = h_bond_mults.data[bond_number];
+
                         // remove bond with tag "bond_number" between particles i and j, then leave the loop
                         m_bond_data->removeBondedGroup(h_bond_tags.data[bond_number]);
                         break;
