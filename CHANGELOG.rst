@@ -4,6 +4,39 @@ Change Log
 v2.x
 ----
 
+v2.9.6 (2021-03-16)
+^^^^^^^^^^^^^^^^^^^
+
+*Bug fixes*
+
+* Support TBB 2021.
+
+v2.9.5 (2021-03-15)
+^^^^^^^^^^^^^^^^^^^
+
+*Bug fixes*
+
+* Support macos-arm64.
+* Support TBB 2021.
+* Fix memory leak in PPPM.
+
+v2.9.4 (2021-02-05)
+^^^^^^^^^^^^^^^^^^^
+
+*Bug fixes*
+
+* Support thrust 1.10
+* Support LLVM11
+* Fix Python syntax warnings
+* Fix compile errors with gcc 10
+
+v2.9.3 (2020-08-05)
+^^^^^^^^^^^^^^^^^^^
+
+*Bug fixes*
+
+* Fix a compile error with CUDA 11
+
 v2.9.2 (2020-06-26)
 ^^^^^^^^^^^^^^^^^^^
 
