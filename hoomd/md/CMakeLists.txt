@@ -24,6 +24,7 @@ set(_md_sources module-md.cc
                    NeighborListStencil.cc
                    NeighborListTree.cc
                    OPLSDihedralForceCompute.cc
+                   PopBD.cc
                    PPPMForceCompute.cc
                    TableAngleForceCompute.cc
                    TableDihedralForceCompute.cc
@@ -119,6 +120,7 @@ set(_md_headers ActiveForceComputeGPU.h
                 NeighborListTree.h
                 OPLSDihedralForceComputeGPU.h
                 OPLSDihedralForceCompute.h
+                PopBD.h
                 PotentialBondGPU.h
                 PotentialBondGPU.cuh
                 PotentialBond.h

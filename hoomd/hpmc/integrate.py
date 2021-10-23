@@ -2369,3 +2369,5 @@ class faceted_ellipsoid_union(mode_hpmc):
     # \brief Format shape parameters for pos file output
     def format_param_pos(self, param):
         raise RuntimeError('.pos output not supported.')
+
+
