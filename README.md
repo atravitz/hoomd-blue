@@ -4,21 +4,33 @@
 This is a proof-of-concept code that implements PopBD in HOOMD-blue.
 Key additions are the dynamic bonding and on-the-fly autocorrelation (included here as a submodule) functionalities. Please use this as a jumping off point for your own implementation of PopBD!
 
-
 NOTE: the latest branch is `popbd_cpu`, *not* `master`. You can merge `popbd_cpu` into `master` at your own discretion.
 
+# Installation Intructions
 
-## TODO: 
-  - install instructions
-  - example run instructions
-  - suggestions for next steps
+This project is currently built on top of HOOMD v2.9.7, so please refer to [the HOOMD v2 installation guide](https://hoomd-blue.readthedocs.io/en/v2.9.7/installation.html#compiling-from-source) for further information.
+
+You may want to use the included `environment.yml` as a base python environment:
+
+`conda env create --file=environment.yml --name popbd_env`
+`conda activate popbd_env`
+
+then build hoomd-blue:
+`mkdir build`
+`cd build/`
+
+cmake ../ -DCMAKE_CXX_FLAGS=-march=native -DCMAKE_C_FLAGS=-march=native -DCMAKE_INSTALL_PREFIX=`pyt    hon3 -c "import site; print(site.getsitepackages()[0])"`
+make -j4
+make install
+
+# TODO
+
+- minimal example run instructions
+- rewrite for hoomd v4
+- add gpu support?
 
 
-
-
-
-
-See below (or in the original repository) for more HOOMD-blue info:
+See below for more HOOMD-blue info:
 
 # HOOMD-blue
 
