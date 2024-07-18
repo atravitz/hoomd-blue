@@ -1,9 +1,7 @@
 channels:
-  - https://conda.ovito.org
   - conda-forge
 dependencies:
   - alabaster=0.7.13=pyhd8ed1ab_0
-  - anari_ovito=0.8.1=hea3e29f_2261
   - aom=3.9.1=h7bae524_0
   - attrs=23.2.0=pyh71513ae_0
   - babel=2.14.0=pyhd8ed1ab_0
@@ -148,7 +146,6 @@ dependencies:
   - openjpeg=2.5.2=h9f1df11_0
   - openmpi=5.0.3=h324cb95_106
   - openssl=3.3.1=hfb2fe0b_1
-  - ospray_ovito=3.0.0=hadc06d9_2558
   - p11-kit=0.24.1=h29577a5_0
   - packaging=24.1=pyhd8ed1ab_0
   - pandas=1.2.4=py38h3777fb4_0

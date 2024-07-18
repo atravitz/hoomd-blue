@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source /Users/atravitz/miniforge3/bin/activate hoomdv2_env
+conda env create --file=environment.yml --name popbd_env
+conda activate popbd_env
 
 rm -rf build
 mkdir build

@@ -29,7 +29,6 @@ make install
 - rewrite for hoomd v4
 - add gpu support?
 
-
 See below for more HOOMD-blue info:
 
 # HOOMD-blue
